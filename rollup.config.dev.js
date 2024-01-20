@@ -3,7 +3,7 @@
 const resolve = require("@rollup/plugin-node-resolve");
 const { terser } = require("rollup-plugin-terser");
 
-const PLUGINS = [resolve({ moduleDirectories: [".."] })];
+const PLUGINS = [resolve({ moduleDirectories: ["node_modules"] })];
 const EXTERNAL = ["single-file-core"];
 
 export default [{
@@ -153,7 +153,8 @@ export default [{
 		file: "lib/single-file-extension-background.js",
 		format: "iife",
 		plugins: []
-	}]
+	}],
+	plugins: PLUGINS
 }, {
 	input: ["src/core/bg/offscreen-document.js"],
 	output: [{

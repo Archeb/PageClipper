@@ -218,6 +218,10 @@ const addProofInput = document.getElementById("addProofInput");
 const woleetKeyInput = document.getElementById("woleetKeyInput");
 const saveToGDriveInput = document.getElementById("saveToGDriveInput");
 const saveToDropboxInput = document.getElementById("saveToDropboxInput");
+const addToPrivateSearchIndexInput = document.getElementById("addToPrivateSearchIndexInput");
+const privateSearchURLInput = document.getElementById("privateSearchURLInput");
+const privateSearchTokenInput = document.getElementById("privateSearchTokenInput");
+const privateSearchIndexInput = document.getElementById("privateSearchIndexInput");
 const saveWithWebDAVInput = document.getElementById("saveWithWebDAVInput");
 const webDAVURLInput = document.getElementById("webDAVURLInput");
 const webDAVUserInput = document.getElementById("webDAVUserInput");
@@ -904,6 +908,13 @@ async function refresh(profileName) {
 	woleetKeyInput.disabled = !profileOptions.addProof;
 	saveToGDriveInput.checked = profileOptions.saveToGDrive;
 	saveToDropboxInput.checked = profileOptions.saveToDropbox;
+	addToPrivateSearchIndexInput.checked = profileOptions.addToPrivateSearchIndex;
+	privateSearchURLInput.value = profileOptions.privateSearchURL;
+	privateSearchURLInput.disabled = !profileOptions.addToPrivateSearchIndex;
+	privateSearchTokenInput.value = profileOptions.privateSearchToken;
+	privateSearchTokenInput.disabled = !profileOptions.addToPrivateSearchIndex;
+	privateSearchIndexInput.value = profileOptions.privateSearchIndex;
+	privateSearchIndexInput.disabled = !profileOptions.addToPrivateSearchIndex;
 	saveWithWebDAVInput.checked = profileOptions.saveWithWebDAV;
 	webDAVURLInput.value = profileOptions.webDAVURL;
 	webDAVURLInput.disabled = !profileOptions.saveWithWebDAV;
@@ -1015,6 +1026,27 @@ async function update() {
 		await pendingSave;
 	} catch (error) {
 		// ignored
+	}
+	if(addToPrivateSearchIndexInput.checked){
+		// 覆盖文件格式与保存位置选项
+		saveToFilesystemInput.checked = false;
+		saveToGDriveInput.checked = false;
+		saveToDropboxInput.checked = false;
+		saveToGitHubInput.checked = false;
+		saveWithCompanionInput.checked = false;
+		saveToClipboardInput.checked = false;
+		// 修改保存位置为 WebDAV
+		saveWithWebDAVInput.checked = true;
+		webDAVURLInput.value = privateSearchURLInput.value;
+		webDAVUserInput.value = "webdav";
+		webDAVPasswordInput.value = privateSearchTokenInput.value;
+		// 修改文件格式为 ZIP
+		fileFormatSelectInput.value = "zip";
+		passwordInput.value = "";
+		createRootDirectoryInput.checked = false;
+		preventAppendedDataInput.checked = false;
+		insertTextBodyInput.checked = false;
+		insertEmbeddedImageInput.checked = false;
 	}
 	pendingSave = browser.runtime.sendMessage({
 		method: "config.updateProfile",

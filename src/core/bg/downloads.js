@@ -26,6 +26,7 @@
 import * as config from "./config.js";
 import * as bookmarks from "./bookmarks.js";
 import * as companion from "./companion.js";
+import * as privateSearch from "./privateSearch.js"
 import * as business from "./business.js";
 import * as editor from "./editor.js";
 import { launchWebAuthFlow, extractAuthCode } from "./tabs-util.js";
@@ -293,7 +294,13 @@ async function downloadCompressedContent(message, tab) {
 				await downloadPageForeground(message.taskId, message.filename, blob, tabId, message.foregroundSave);
 			} else if (message.saveWithWebDAV) {
 				const blob = await (await fetch(result.url)).blob();
-				response = await saveWithWebDAV(message.taskId, encodeSharpCharacter(message.filename), blob, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt });
+				if(message.addToMeiliSearchIndex){
+					message.pageData.resources.images.push({name: "screenshot.png", content: await privateSearch.createScreenshot(tab) });
+					response = await saveWithWebDAVWithPath(message.taskId, encodeSharpCharacter(message.filename), blob, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt }, message.pageData);
+					//await privateSearch.indexDocument(message, tab);
+				} else {
+					response = await saveWithWebDAV(message.taskId, encodeSharpCharacter(message.filename), blob, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt });
+				}
 			} else if (message.saveToGDrive) {
 				const blob = await (await fetch(result.url)).blob();
 				await saveToGDrive(message.taskId, encodeSharpCharacter(message.filename), blob, {
@@ -424,6 +431,37 @@ async function saveWithWebDAV(taskId, filename, content, url, username, password
 			const client = new WebDAV(url, username, password);
 			business.setCancelCallback(taskId, () => client.abort());
 			return await client.upload(filename, content, { filenameConflictAction, prompt });
+		}
+	} catch (error) {
+		throw new Error(error.message + " (WebDAV)");
+	}
+}
+
+async function saveWithWebDAVWithPath(taskId, filename, content, url, username, password, { filenameConflictAction, prompt }, pageData) {
+	try {
+		const taskInfo = business.getTaskInfo(taskId);
+		if (!taskInfo || !taskInfo.cancelled) {
+			const client = new WebDAV(url, username, password);
+			business.setCancelCallback(taskId, () => client.abort());
+			return new Promise(async (resolve, reject) => {
+				try {
+					// root directory from filename, stripping off ".zip"
+					const rootDir = filename.substring(0, filename.length - 4) + "/";
+					// upload the index.html file
+					await client.upload(rootDir + "index.html", pageData.content, { filenameConflictAction, prompt });
+					// go through the files in pageData.resources.fonts,.images,etc... and upload them
+					const resourceTypes = ["fonts", "images", "stylesheets", "scripts"];
+					for (const resourceType of resourceTypes) {
+						for (const resource of pageData.resources[resourceType]) {
+							const resourcePath = rootDir + resource.name;
+							await client.upload(resourcePath, resource.content, { filenameConflictAction, prompt });
+						}
+					}
+					resolve();
+				} catch (error) {
+					reject(error);
+				}
+			});
 		}
 	} catch (error) {
 		throw new Error(error.message + " (WebDAV)");
