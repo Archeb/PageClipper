@@ -294,10 +294,13 @@ async function downloadCompressedContent(message, tab) {
 				await downloadPageForeground(message.taskId, message.filename, blob, tabId, message.foregroundSave);
 			} else if (message.saveWithWebDAV) {
 				const blob = await (await fetch(result.url)).blob();
-				if(message.addToMeiliSearchIndex){
-					message.pageData.resources.images.push({name: "screenshot.png", content: await privateSearch.createScreenshot(tab) });
+				if(message.addToPrivateSearchIndex){
+					let screenshot;
+					if(screenshot = await privateSearch.createScreenshot(tab)){
+						message.pageData.resources.images.push({name: "screenshot.png", content: screenshot });
+					}
 					response = await saveWithWebDAVWithPath(message.taskId, encodeSharpCharacter(message.filename), blob, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt }, message.pageData);
-					//await privateSearch.indexDocument(message, tab);
+					await privateSearch.indexDocument(message, tab);
 				} else {
 					response = await saveWithWebDAV(message.taskId, encodeSharpCharacter(message.filename), blob, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt });
 				}

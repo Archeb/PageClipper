@@ -152,9 +152,15 @@ export default [{
 	output: [{
 		file: "lib/single-file-extension-background.js",
 		format: "iife",
-		plugins: []
+		plugins: [],
+		globals: {
+			"crypto": "crypto",
+		}
 	}],
-	plugins: PLUGINS
+	plugins: PLUGINS,
+    watch: {
+        include: 'src/**'
+    }
 }, {
 	input: ["src/core/bg/offscreen-document.js"],
 	output: [{
@@ -168,5 +174,8 @@ export default [{
 		file: "lib/single-file-background.js",
 		format: "iife",
 		plugins: []
-	}]
+	}],
+    watch: {
+        include: 'src/**'
+    }
 }];

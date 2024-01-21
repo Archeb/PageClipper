@@ -1037,7 +1037,7 @@ async function update() {
 		saveToClipboardInput.checked = false;
 		// 修改保存位置为 WebDAV
 		saveWithWebDAVInput.checked = true;
-		webDAVURLInput.value = privateSearchURLInput.value;
+		webDAVURLInput.value = privateSearchURLInput.value + "/webdav/";
 		webDAVUserInput.value = "webdav";
 		webDAVPasswordInput.value = privateSearchTokenInput.value;
 		// 修改文件格式为 ZIP
@@ -1078,6 +1078,10 @@ async function update() {
 			woleetKey: woleetKeyInput.value,
 			saveToGDrive: saveToGDriveInput.checked,
 			saveToDropbox: saveToDropboxInput.checked,
+			addToPrivateSearchIndex: addToPrivateSearchIndexInput.checked,
+			privateSearchURL: privateSearchURLInput.value,
+			privateSearchToken: privateSearchTokenInput.value,
+			privateSearchIndex: privateSearchIndexInput.value,
 			saveWithWebDAV: saveWithWebDAVInput.checked,
 			webDAVURL: webDAVURLInput.value,
 			webDAVUser: webDAVUserInput.value,
