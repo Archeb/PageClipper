@@ -30,13 +30,19 @@ browser.runtime.onMessage.addListener(async ({ method, pageData, url, options })
 	if (method == "processPage") {
 		const result = await getPageData(options, null, null, { fetch });
 		const blob = new Blob([typeof result.content == "string" ? result.content : new Uint8Array(result.content)], { type: "text/html" });
-		return {
+		let returnObject = {
 			url: URL.createObjectURL(blob),
 			archiveTime: result.archiveTime,
 			doctype: result.doctype,
 			filename: result.filename,
-			title: result.title
+			title: result.title,
 		};
+		
+		if (result.resources) {
+			returnObject.resources = result.resources;
+		}
+		
+		return returnObject;
 	}
 	if (method == "compressPage") {
 		const blob = await compress(await yabson.parse(pageData), options);

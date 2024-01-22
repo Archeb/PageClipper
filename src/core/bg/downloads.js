@@ -68,6 +68,7 @@ export {
 	saveToGitHub,
 	saveToDropbox,
 	saveWithWebDAV,
+	saveWithWebDAVWithPath,
 	encodeSharpCharacter
 };
 
@@ -187,7 +188,7 @@ async function downloadContent(message, tab) {
 			} else if (message.saveToClipboard) {
 				ui.onEnd(tabId);
 			} else if (message.saveWithWebDAV) {
-				response = await saveWithWebDAV(message.taskId, encodeSharpCharacter(message.filename), message.content, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt });
+					response = await saveWithWebDAV(message.taskId, encodeSharpCharacter(message.filename), message.content, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt });
 			} else if (message.saveToGDrive) {
 				await saveToGDrive(message.taskId, encodeSharpCharacter(message.filename), new Blob(message.content, { type: MIMETYPE_HTML }), {
 					forceWebAuthFlow: message.forceWebAuthFlow
@@ -293,15 +294,15 @@ async function downloadCompressedContent(message, tab) {
 				const blob = (await fetch(result.url)).blob();
 				await downloadPageForeground(message.taskId, message.filename, blob, tabId, message.foregroundSave);
 			} else if (message.saveWithWebDAV) {
-				const blob = await (await fetch(result.url)).blob();
 				if(message.addToPrivateSearchIndex){
 					let screenshot;
 					if(screenshot = await privateSearch.createScreenshot(tab)){
 						message.pageData.resources.images.push({name: "screenshot.png", content: screenshot });
 					}
-					response = await saveWithWebDAVWithPath(message.taskId, encodeSharpCharacter(message.filename), blob, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt }, message.pageData);
+					response = await saveWithWebDAVWithPath(message.taskId, encodeSharpCharacter(message.filename), message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt }, message.pageData);
 					await privateSearch.indexDocument(message, tab);
 				} else {
+					const blob = await (await fetch(result.url)).blob();
 					response = await saveWithWebDAV(message.taskId, encodeSharpCharacter(message.filename), blob, message.webDAVURL, message.webDAVUser, message.webDAVPassword, { filenameConflictAction: message.filenameConflictAction, prompt });
 				}
 			} else if (message.saveToGDrive) {
@@ -440,7 +441,7 @@ async function saveWithWebDAV(taskId, filename, content, url, username, password
 	}
 }
 
-async function saveWithWebDAVWithPath(taskId, filename, content, url, username, password, { filenameConflictAction, prompt }, pageData) {
+async function saveWithWebDAVWithPath(taskId, filename, url, username, password, { filenameConflictAction, prompt }, pageData) {
 	try {
 		const taskInfo = business.getTaskInfo(taskId);
 		if (!taskInfo || !taskInfo.cancelled) {
@@ -448,8 +449,8 @@ async function saveWithWebDAVWithPath(taskId, filename, content, url, username, 
 			business.setCancelCallback(taskId, () => client.abort());
 			return new Promise(async (resolve, reject) => {
 				try {
-					// root directory from filename, stripping off ".zip"
-					const rootDir = filename.substring(0, filename.length - 4) + "/";
+					// root directory from filename
+					const rootDir = filename + "/";
 					// upload the index.html file
 					await client.upload(rootDir + "index.html", pageData.content, { filenameConflictAction, prompt });
 					// go through the files in pageData.resources.fonts,.images,etc... and upload them

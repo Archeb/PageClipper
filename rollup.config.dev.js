@@ -3,7 +3,7 @@
 const resolve = require("@rollup/plugin-node-resolve");
 const { terser } = require("rollup-plugin-terser");
 
-const PLUGINS = [resolve({ moduleDirectories: ["node_modules"] })];
+const PLUGINS = [resolve({ moduleDirectories: [".."] })];
 const EXTERNAL = ["single-file-core"];
 
 export default [{

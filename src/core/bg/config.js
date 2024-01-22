@@ -33,6 +33,7 @@ const REGEXP_RULE_PREFIX = "regexp:";
 const PROFILE_NAME_PREFIX = "profile_";
 
 const BACKGROUND_SAVE_SUPPORTED = !(/Mobile.*Firefox/.test(navigator.userAgent));
+const AUTO_SAVE_SUPPORTED = true;
 
 const DEFAULT_CONFIG = {
 	removeHiddenElements: true,
@@ -336,7 +337,8 @@ async function onMessage(message) {
 			DISABLED_PROFILE_NAME,
 			DEFAULT_PROFILE_NAME,
 			CURRENT_PROFILE_NAME,
-			BACKGROUND_SAVE_SUPPORTED
+			BACKGROUND_SAVE_SUPPORTED,
+			AUTO_SAVE_SUPPORTED
 		};
 	}
 	if (message.method.endsWith(".getRules")) {

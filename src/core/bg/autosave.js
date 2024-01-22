@@ -25,11 +25,13 @@
 
 import * as config from "./config.js";
 import * as business from "./business.js";
+import * as privateSearch from "./privateSearch.js";
 import * as companion from "./companion.js";
 import * as downloads from "./downloads.js";
 import * as tabsData from "./tabs-data.js";
 import * as ui from "./../../ui/bg/index.js";
 import * as woleet from "./../../lib/woleet/woleet.js";
+import * as yabson from "./../../lib/yabson/yabson.js";
 import { autoSaveIsEnabled } from "./autosave-util.js";
 import * as offscreen from "./offscreen.js";
 
@@ -176,10 +178,21 @@ async function saveContent(message, tab) {
 							filenameConflictAction: options.filenameConflictAction
 						});
 					} else if (options.saveWithWebDAV) {
-						const content = await (await fetch(pageData.url)).blob();
-						await downloads.saveWithWebDAV(message.taskId, downloads.encodeSharpCharacter(pageData.filename), content, options.webDAVURL, options.webDAVUser, options.webDAVPassword, {
-							filenameConflictAction: options.filenameConflictAction
-						});
+						if(options.addToPrivateSearchIndex){
+							let screenshot;
+							if(screenshot = await privateSearch.createScreenshot(tab)){
+								pageData.resources.images.push({name: "screenshot.png", content: screenshot });
+							}
+							await downloads.saveWithWebDAVWithPath(message.taskId, downloads.encodeSharpCharacter(pageData.filename), options.webDAVURL, options.webDAVUser, options.webDAVPassword, {
+								filenameConflictAction: options.filenameConflictAction
+							}, pageData);
+							await privateSearch.indexDocument(message, tab);
+						} else {
+							const content = await (await fetch(pageData.url)).blob();
+							await downloads.saveWithWebDAV(message.taskId, downloads.encodeSharpCharacter(pageData.filename), content, options.webDAVURL, options.webDAVUser, options.webDAVPassword, {
+								filenameConflictAction: options.filenameConflictAction
+							});
+						}
 					} else if (options.saveToGitHub) {
 						const content = await (await fetch(pageData.url)).blob();
 						await (await downloads.saveToGitHub(message.taskId, downloads.encodeSharpCharacter(pageData.filename), content, options.githubToken, options.githubUser, options.githubRepository, options.githubBranch, {
